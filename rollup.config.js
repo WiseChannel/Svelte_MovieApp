@@ -2,7 +2,15 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
+import {
+	terser
+} from 'rollup-plugin-terser';
+import {
+	config
+} from 'dotenv'
+import {
+	replace
+} from '@rollup/plugin-replace'
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -12,9 +20,18 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'public/build/bundle.js'
+		file: 'public/build/bundle.js',
 	},
+
 	plugins: [
+		replace({
+			process: JSON.stringify({
+				env: {
+					API_KEY: production ? process.env.API_KEY : config().parsed.API_KEY,
+				}
+			})
+		}),
+
 		svelte({
 			// enable run-time checks when not in production
 			dev: !production,
