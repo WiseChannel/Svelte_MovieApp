@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "bundle.css",
+  "sources": [
+    "../../App.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\n</script>\n\nApp\n\n<style>\n  :global(body) {\n    font-family: 'Abel', sans-serif;\n    margin: 0;\n    padding: 0;\n    box-sizing: border-box;\n  }\n</style>\n"
+  ],
+  "names": [],
+  "mappings": "AAOU,IAAI,AAAE,CAAC,AACb,WAAW,CAAE,MAAM,CAAC,CAAC,UAAU,CAC/B,MAAM,CAAE,CAAC,CACT,OAAO,CAAE,CAAC,CACV,UAAU,CAAE,UAAU,AACxB,CAAC"
+}
