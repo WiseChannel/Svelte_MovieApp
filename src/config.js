@@ -1,9 +1,5 @@
-// Configuration for TMDB
-// To se the latest configuration fetch it from https://api.themoviedb.org/3/configuration?api_key=YOUR API KEY HERE!
-// Read more about the API here: https://developers.themoviedb.org/
-
 const API_URL = 'https://api.themoviedb.org/3/';
-const API_KEY = process.env.API_KEY;
+const API_KEY = 'd4e9e87f14a720e32c310104fc6d3f6b';
 
 const SEARCH_BASE_URL = `${API_URL}search/movie?api_key=${API_KEY}&query=`;
 const POPULAR_BASE_URL = `${API_URL}movie/popular?api_key=${API_KEY}`;

@@ -1,4 +1,6 @@
 <script>
+import { onMount } from 'svelte'
+import { fetchMovies } from '../api'
 
 //import components
 import Header from '../components/Header.svelte'
@@ -14,7 +16,22 @@ let isLoading
 let searchTerm = ''
 let error 
 
+const handleFetchMovies = async (loadMore, searchTerm) => {
+    try {
+        isLoading = true;
+        error = false;
+        movies = await fetchMovies(movies, loadMore, searchTerm);
+        console.log(movies);
+    } catch(e) {
+        error = true;
+        console.error('Error from Home: ', e);
+    }
+    isLoading = false;
+}
 
+onMount(async () => {
+    handleFetchMovies(false, searchTerm)
+})
 </script>
 
 <Header />
