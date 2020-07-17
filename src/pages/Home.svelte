@@ -49,7 +49,7 @@ onMount(async () => {
             text={movies.heroImage.overview}
         />
     {/if}
-{/if}}
+{/if}
 
 
 <Search />
