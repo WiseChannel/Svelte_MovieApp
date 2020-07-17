@@ -3,7 +3,6 @@ import { onMount } from 'svelte'
 import { fetchMovies } from '../api'
 
 //import components
-import Header from '../components/Header.svelte'
 import Hero from '../components/Hero.svelte'
 import Search from '../components/Search.svelte'
 import Grid from '../components/Grid.svelte'
@@ -14,7 +13,7 @@ import Spiner from '../components/Spinner.svelte'
 let movies = { movies: [] }
 let isLoading
 let searchTerm = ''
-let error 
+let error
 
 const handleFetchMovies = async (loadMore, searchTerm) => {
     try {
@@ -34,7 +33,6 @@ onMount(async () => {
 })
 </script>
 
-<Header />
 <Hero />
 <Search />
 <Grid />
