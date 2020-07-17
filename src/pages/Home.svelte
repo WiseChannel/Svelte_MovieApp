@@ -2,6 +2,12 @@
 import { onMount } from 'svelte'
 import { fetchMovies } from '../api'
 
+//import config
+import {
+  IMAGE_BASE_URL,
+  BACKDROP_SIZE,
+} from '../config'
+
 //import components
 import Hero from '../components/Hero.svelte'
 import Search from '../components/Search.svelte'
@@ -33,7 +39,19 @@ onMount(async () => {
 })
 </script>
 
-<Hero />
+{#if error}
+    <p>Something went to wrong..</p>
+    {:else}
+    {#if movies.heroImage && !searchTerm}
+        <Hero
+            image={`${IMAGE_BASE_URL}${BACKDROP_SIZE}${movies.heroImage.backdrop_path}`}
+            title={movies.heroImage.original_title}
+            text={movies.heroImage.overview}
+        />
+    {/if}
+{/if}}
+
+
 <Search />
 <Grid />
 <Thumb />
