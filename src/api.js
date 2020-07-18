@@ -24,17 +24,19 @@ export  const fetchMovies = async (movies, loadMore, searchTerm) => {
 }
 
 export const fetchMovie = async movieId => {
-    const endpoint = MOVIE_ENDPOINT(movieId)
-    const creditsEndpoint = CREDITS_ENDPOINT(movieId)
+    const endpoint = MOVIE_ENDPOINT(movieId);
+    const creditsEndpoint = CREDITS_ENDPOINT(movieId);
 
-    const result = await (await fetch(endpoint)).json()
-    const creditsReasult = await (await fetch(creditsEndpoint)).json()
+    const result = await (await fetch(endpoint)).json();
+    const creditsResult = await (await fetch(creditsEndpoint)).json();
 
-    const directors = creditsReasult.crew.filter(member => member.job)
+    const directors = creditsResult.crew.filter(
+      member => member.job === 'Director'
+    );
 
     return {
         ...result,
-        actors: creditsEndpoint.cast,
+        actors: creditsResult.cast,
         directors
     }
 }

@@ -30,7 +30,7 @@ import Grid from '../components/Grid.svelte'
     }
 
     onMount(async () => {
-      handleFetchMovie()
+        handleFetchMovie()
     })
 
 </script>
@@ -39,9 +39,12 @@ import Grid from '../components/Grid.svelte'
     <p>Something went wrong..</p>
 {:else if movie}
     <div transition:fade={{ duration: 300 }}>
-        <Navigation />
-        <MovieInfo />
-        <MovieInfoBar />
+        <Navigation movie={movie.original_title} />
+        <MovieInfo {movie}/>
+        <MovieInfoBar
+            time={movie.runtime}
+            budget={movie.budget}
+            revenue={movie.revenue} />
         <Grid header='Actors' />
         <Actor />
     </div>
@@ -49,7 +52,7 @@ import Grid from '../components/Grid.svelte'
 
 {#if isLoading}
     <Spinner />
-{/if}}
+{/if}
 
 <style>
 
