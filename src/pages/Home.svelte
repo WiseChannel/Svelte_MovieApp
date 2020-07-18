@@ -34,6 +34,13 @@ const handleFetchMovies = async (loadMore, searchTerm) => {
     isLoading = false;
 }
 
+const handleSearch = e => {
+    searchTerm = e.detail.searchText
+    movies.movies = []
+    handleFetchMovies(false, searchTerm)
+    console.log(e);
+}
+
 onMount(async () => {
     handleFetchMovies(false, searchTerm)
 })
@@ -52,7 +59,7 @@ onMount(async () => {
 {/if}
 
 
-<Search />
+<Search on:search={handleSearch} />
 <Grid />
 <Thumb />
 <LoadMoreButtun />
