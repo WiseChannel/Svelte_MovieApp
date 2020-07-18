@@ -1,6 +1,7 @@
 <script>
   import { POSTER_SIZE, IMAGE_BASE_URL } from '../config'
   const noImage = '/image/no_image.jpg'
+
   export let actor
 
 </script>

@@ -1,26 +1,30 @@
 <script>
-import router from 'page'
-//import components
-import Header from './components/Header.svelte'
-import Home from './pages/Home.svelte'
-import Movie from './pages/Movie.svelte'
-import NotFound from './pages/NotFound.svelte'
+  import router from 'page';
+  // Components
+  import Header from './components/Header.svelte';
+  import Home from './pages/Home.svelte';
+  import Movie from './pages/Movie.svelte';
+  import NotFound from './pages/NotFound.svelte';
 
-  let page
-  let params
+  let page;
+  let params;
 
-  router('/', () => page = Home)
-  router('/movie/:id', (ctx, next) => {
-    params = ctx.params
-    next()
-  }, () => page = Movie)
-  router('/*', () => page = NotFound)
+  router('/', () => (page = Home));
+  router(
+          '/movie/:id',
+          (ctx, next) => {
+            params = ctx.params;
+            next();
+          },
+          () => (page = Movie)
+  );
+  router('/*', () => (page = NotFound));
 
-  router.start()
+  router.start();
 </script>
 
 <Header />
-<!--<svelte:component this={page} {params} />-->
+<!-- <svelte:component this={page} {params} /> -->
 
 {#if page === Home}
   <Home />
@@ -33,7 +37,6 @@ import NotFound from './pages/NotFound.svelte'
 {#if page === NotFound}
   <NotFound />
 {/if}
-
 
 <style>
   :global(body) {
