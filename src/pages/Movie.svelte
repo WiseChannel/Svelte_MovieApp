@@ -45,8 +45,11 @@ import Grid from '../components/Grid.svelte'
             time={movie.runtime}
             budget={movie.budget}
             revenue={movie.revenue} />
-        <Grid header='Actors' />
-        <Actor />
+        <Grid header='Actors'>
+            {#each movie.actor as actor}
+                <Actor {actor} />
+            {/each}
+        </Grid>
     </div>
 {/if}
 
