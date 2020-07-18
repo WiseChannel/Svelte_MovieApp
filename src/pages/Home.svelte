@@ -60,7 +60,6 @@
     {/if}
 {/if}
 
-
 <Search on:search={handleSearch} />
 
 <Grid header={searchTerm ? 'Search Result' : 'Popular Movies'} >
