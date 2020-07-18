@@ -14,7 +14,7 @@
     import Search from '../components/Search.svelte';
     import Grid from '../components/Grid.svelte';
     import Thumb from '../components/Thumb.svelte';
-    import Spiner from '../components/Spinner.svelte';
+    import Spinner from '../components/Spinner.svelte';
     import LoadMoreButton from '../components/LoadMoreButton.svelte';
 
     let movies = { movies: [] };
@@ -73,7 +73,7 @@
 </Grid>
 
 {#if isLoading}
-    <Spiner />
+    <Spinner />
 {/if}
 
 {#if !isLoading && movies.currentPage < movies.totalPage}

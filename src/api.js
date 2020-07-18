@@ -22,3 +22,19 @@ export  const fetchMovies = async (movies, loadMore, searchTerm) => {
         totalPage: result.total_pages
     }
 }
+
+export const fetchMovie = async movieId => {
+    const endpoint = MOVIE_ENDPOINT(movieId)
+    const creditsEndpoint = CREDITS_ENDPOINT(movieId)
+
+    const result = await (await fetch(endpoint)).json()
+    const creditsReasult = await (await fetch(creditsEndpoint)).json()
+
+    const directors = creditsReasult.crew.filter(member => member.job)
+
+    return {
+        ...result,
+        actors: creditsEndpoint.cast,
+        directors
+    }
+}
