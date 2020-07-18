@@ -1,12 +1,12 @@
-import { 
-    POPULAR_BASE_URL, 
-    SEARCH_BASE_URL, 
-    API_URL, 
-    MOVIE_ENDPOINT, 
+import {
+    POPULAR_BASE_URL,
+    SEARCH_BASE_URL,
+    API_URL,
+    MOVIE_ENDPOINT,
     CREDITS_ENDPOINT } from './config.js'
 
 export  const fetchMovies = async (movies, loadMore, searchTerm) => {
-    const endpoint = searchTerm 
+    const endpoint = searchTerm
     ? `${SEARCH_BASE_URL}${searchTerm}&page=${
         loadMore ? movies.currentPage + 1 : 1 
     }`
@@ -16,7 +16,7 @@ export  const fetchMovies = async (movies, loadMore, searchTerm) => {
 
     return {
         ...movies,
-        movies: loadMore ? [...movies.movies, ...resutl.results] : [...result.results],
+        movies: loadMore ? [...movies.movies, ...result.results] : [...result.results],
         heroImage: movies.heroImage || result.results[0],
         currentPage: result.page,
         totalPage: result.total_pages

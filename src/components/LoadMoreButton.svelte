@@ -1,8 +1,11 @@
 <script>
-
+  import { createEventDispatcher } from 'svelte';
+  const dispatch = createEventDispatcher();
 </script>
 
-Button
+<button on:click={() => dispatch('loadMore')}>
+  <slot />
+</button>
 
 <style>
   button {
