@@ -6,7 +6,7 @@
   let timeOut;
 
   $: {
-    if (serchText) {
+    if (serchText !== undefined) {
       console.log('Search:');
       clearTimeout(timeOut)
       timeOut = setTimeout(() => {

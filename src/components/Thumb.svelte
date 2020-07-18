@@ -1,6 +1,20 @@
 <script>
+  export let image = ''
+  export let movieId = ''
+  export let clickable = false
 
+  const noImg = './image/no_image.jpg'
 </script>
+
+  <div class="wrapper">
+    {#if clickable}
+      <a href={"/movie/{movieId}"} >
+        <img class='clickable' src={image ? image : noImg} alt="moviethumb">
+      </a>
+    {:else}
+      <img src={image ? image : noImg} alt="image" />
+    {/if}
+  </div>
 
 <style>
   .wrapper {

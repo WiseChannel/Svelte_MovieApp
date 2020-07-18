@@ -6,6 +6,7 @@ import { fetchMovies } from '../api'
 import {
   IMAGE_BASE_URL,
   BACKDROP_SIZE,
+  POSTER_SIZE
 } from '../config'
 
 //import components
@@ -60,8 +61,15 @@ onMount(async () => {
 
 
 <Search on:search={handleSearch} />
-<Grid />
-<Thumb />
+<Grid header={searchTerm ? 'Search Result' : 'Popular Movies'} >
+    {#each movies.movies as movie}
+        <Thumb 
+            clickable
+            image={movie.poster_path && IMAGE_BASE_URL + POSTER_SIZE + movie.poster_path}
+            movieId={movie.id}
+            />
+    {/each}
+</Grid>
 <LoadMoreButtun />
 <Spiner />
 

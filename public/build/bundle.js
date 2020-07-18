@@ -4,6 +4,12 @@ var app = (function () {
     'use strict';
 
     function noop() { }
+    function assign(tar, src) {
+        // @ts-ignore
+        for (const k in src)
+            tar[k] = src[k];
+        return tar;
+    }
     function add_location(element, file, line, column, char) {
         element.__svelte_meta = {
             loc: { file, line, column, char }
@@ -24,6 +30,42 @@ var app = (function () {
     function safe_not_equal(a, b) {
         return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
     }
+    function create_slot(definition, ctx, $$scope, fn) {
+        if (definition) {
+            const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
+            return definition[0](slot_ctx);
+        }
+    }
+    function get_slot_context(definition, ctx, $$scope, fn) {
+        return definition[1] && fn
+            ? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
+            : $$scope.ctx;
+    }
+    function get_slot_changes(definition, $$scope, dirty, fn) {
+        if (definition[2] && fn) {
+            const lets = definition[2](fn(dirty));
+            if ($$scope.dirty === undefined) {
+                return lets;
+            }
+            if (typeof lets === 'object') {
+                const merged = [];
+                const len = Math.max($$scope.dirty.length, lets.length);
+                for (let i = 0; i < len; i += 1) {
+                    merged[i] = $$scope.dirty[i] | lets[i];
+                }
+                return merged;
+            }
+            return $$scope.dirty | lets;
+        }
+        return $$scope.dirty;
+    }
+    function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+        const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+        if (slot_changes) {
+            const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+            slot.p(slot_context, slot_changes);
+        }
+    }
 
     function append(target, node) {
         target.appendChild(node);
@@ -34,6 +76,12 @@ var app = (function () {
     function detach(node) {
         node.parentNode.removeChild(node);
     }
+    function destroy_each(iterations, detaching) {
+        for (let i = 0; i < iterations.length; i += 1) {
+            if (iterations[i])
+                iterations[i].d(detaching);
+        }
+    }
     function element(name) {
         return document.createElement(name);
     }
@@ -42,6 +90,9 @@ var app = (function () {
     }
     function space() {
         return text(' ');
+    }
+    function empty() {
+        return text('');
     }
     function listen(node, event, handler, options) {
         node.addEventListener(event, handler, options);
@@ -359,6 +410,15 @@ var app = (function () {
         dispatch_dev("SvelteDOMSetData", { node: text, data });
         text.data = data;
     }
+    function validate_each_argument(arg) {
+        if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
+            let msg = '{#each} only iterates over array-like objects.';
+            if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+                msg += ' You can use a spread to convert this iterable into an array.';
+            }
+            throw new Error(msg);
+        }
+    }
     function validate_slots(name, slot, keys) {
         for (const slot_key of Object.keys(slot)) {
             if (!~keys.indexOf(slot_key)) {
@@ -490,6 +550,8 @@ var app = (function () {
     const IMAGE_BASE_URL = 'http://image.tmdb.org/t/p/';
     // Sizes: w300, w780, w1280, original
     const BACKDROP_SIZE = 'w1280';
+    // w92, w154, w185, w342, w500, w780, original
+    const POSTER_SIZE = 'w500';
 
     const fetchMovies = async (movies, loadMore, searchTerm) => {
         const endpoint = searchTerm 
@@ -694,15 +756,15 @@ var app = (function () {
     			input = element("input");
     			attr_dev(i, "class", "fa fa-search fa-2x svelte-jvz4tg");
     			attr_dev(i, "name", "search");
-    			add_location(i, file$2, 21, 4, 387);
+    			add_location(i, file$2, 21, 4, 401);
     			attr_dev(input, "type", "text");
     			attr_dev(input, "placeholder", "Search Movie");
     			attr_dev(input, "class", "svelte-jvz4tg");
-    			add_location(input, file$2, 22, 4, 438);
+    			add_location(input, file$2, 22, 4, 452);
     			attr_dev(div0, "class", "content svelte-jvz4tg");
-    			add_location(div0, file$2, 20, 2, 361);
+    			add_location(div0, file$2, 20, 2, 375);
     			attr_dev(div1, "class", "wrapper svelte-jvz4tg");
-    			add_location(div1, file$2, 19, 0, 337);
+    			add_location(div1, file$2, 19, 0, 351);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -782,7 +844,7 @@ var app = (function () {
     	$$self.$$.update = () => {
     		if ($$self.$$.dirty & /*serchText, timeOut*/ 5) {
     			 {
-    				if (serchText) {
+    				if (serchText !== undefined) {
     					console.log("Search:");
     					clearTimeout(timeOut);
 
@@ -816,17 +878,71 @@ var app = (function () {
 
     /* src/components/Grid.svelte generated by Svelte v3.24.0 */
 
+    const file$3 = "src/components/Grid.svelte";
+
     function create_fragment$3(ctx) {
+    	let div1;
+    	let h1;
+    	let t0;
+    	let t1;
+    	let div0;
+    	let current;
+    	const default_slot_template = /*$$slots*/ ctx[2].default;
+    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[1], null);
+
     	const block = {
-    		c: noop,
+    		c: function create() {
+    			div1 = element("div");
+    			h1 = element("h1");
+    			t0 = text(/*header*/ ctx[0]);
+    			t1 = space();
+    			div0 = element("div");
+    			if (default_slot) default_slot.c();
+    			attr_dev(h1, "class", "svelte-1p9gw0e");
+    			add_location(h1, file$3, 7, 2, 64);
+    			attr_dev(div0, "class", "content svelte-1p9gw0e");
+    			add_location(div0, file$3, 8, 2, 84);
+    			attr_dev(div1, "class", "wrapper svelte-1p9gw0e");
+    			add_location(div1, file$3, 6, 0, 40);
+    		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
-    		m: noop,
-    		p: noop,
-    		i: noop,
-    		o: noop,
-    		d: noop
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, h1);
+    			append_dev(h1, t0);
+    			append_dev(div1, t1);
+    			append_dev(div1, div0);
+
+    			if (default_slot) {
+    				default_slot.m(div0, null);
+    			}
+
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (!current || dirty & /*header*/ 1) set_data_dev(t0, /*header*/ ctx[0]);
+
+    			if (default_slot) {
+    				if (default_slot.p && dirty & /*$$scope*/ 2) {
+    					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[1], dirty, null, null);
+    				}
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (default_slot) default_slot.d(detaching);
+    		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
@@ -840,22 +956,39 @@ var app = (function () {
     	return block;
     }
 
-    function instance$3($$self, $$props) {
-    	const writable_props = [];
+    function instance$3($$self, $$props, $$invalidate) {
+    	let { header } = $$props;
+    	const writable_props = ["header"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Grid> was created with unknown prop '${key}'`);
     	});
 
     	let { $$slots = {}, $$scope } = $$props;
-    	validate_slots("Grid", $$slots, []);
-    	return [];
+    	validate_slots("Grid", $$slots, ['default']);
+
+    	$$self.$set = $$props => {
+    		if ("header" in $$props) $$invalidate(0, header = $$props.header);
+    		if ("$$scope" in $$props) $$invalidate(1, $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$capture_state = () => ({ header });
+
+    	$$self.$inject_state = $$props => {
+    		if ("header" in $$props) $$invalidate(0, header = $$props.header);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [header, $$scope, $$slots];
     }
 
     class Grid extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$3, create_fragment$3, safe_not_equal, {});
+    		init(this, options, instance$3, create_fragment$3, safe_not_equal, { header: 0 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -863,22 +996,152 @@ var app = (function () {
     			options,
     			id: create_fragment$3.name
     		});
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+
+    		if (/*header*/ ctx[0] === undefined && !("header" in props)) {
+    			console.warn("<Grid> was created without expected prop 'header'");
+    		}
+    	}
+
+    	get header() {
+    		throw new Error("<Grid>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set header(value) {
+    		throw new Error("<Grid>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
     /* src/components/Thumb.svelte generated by Svelte v3.24.0 */
 
-    function create_fragment$4(ctx) {
+    const file$4 = "src/components/Thumb.svelte";
+
+    // (14:4) {:else}
+    function create_else_block(ctx) {
+    	let img;
+    	let img_src_value;
+
     	const block = {
-    		c: noop,
+    		c: function create() {
+    			img = element("img");
+    			if (img.src !== (img_src_value = /*image*/ ctx[0] ? /*image*/ ctx[0] : noImg)) attr_dev(img, "src", img_src_value);
+    			attr_dev(img, "alt", "image");
+    			attr_dev(img, "class", "svelte-1wzxlnt");
+    			add_location(img, file$4, 14, 6, 328);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, img, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*image*/ 1 && img.src !== (img_src_value = /*image*/ ctx[0] ? /*image*/ ctx[0] : noImg)) {
+    				attr_dev(img, "src", img_src_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(img);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block.name,
+    		type: "else",
+    		source: "(14:4) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (10:4) {#if clickable}
+    function create_if_block(ctx) {
+    	let a;
+    	let img;
+    	let img_src_value;
+    	let a_href_value;
+
+    	const block = {
+    		c: function create() {
+    			a = element("a");
+    			img = element("img");
+    			attr_dev(img, "class", "clickable svelte-1wzxlnt");
+    			if (img.src !== (img_src_value = /*image*/ ctx[0] ? /*image*/ ctx[0] : noImg)) attr_dev(img, "src", img_src_value);
+    			attr_dev(img, "alt", "moviethumb");
+    			add_location(img, file$4, 11, 8, 230);
+    			attr_dev(a, "href", a_href_value = "/movie/{movieId}");
+    			add_location(a, file$4, 10, 6, 191);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, a, anchor);
+    			append_dev(a, img);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*image*/ 1 && img.src !== (img_src_value = /*image*/ ctx[0] ? /*image*/ ctx[0] : noImg)) {
+    				attr_dev(img, "src", img_src_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(a);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(10:4) {#if clickable}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$4(ctx) {
+    	let div;
+
+    	function select_block_type(ctx, dirty) {
+    		if (/*clickable*/ ctx[1]) return create_if_block;
+    		return create_else_block;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block = current_block_type(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			if_block.c();
+    			attr_dev(div, "class", "wrapper svelte-1wzxlnt");
+    			add_location(div, file$4, 8, 2, 143);
+    		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
-    		m: noop,
-    		p: noop,
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			if_block.m(div, null);
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
+    				if_block.p(ctx, dirty);
+    			} else {
+    				if_block.d(1);
+    				if_block = current_block_type(ctx);
+
+    				if (if_block) {
+    					if_block.c();
+    					if_block.m(div, null);
+    				}
+    			}
+    		},
     		i: noop,
     		o: noop,
-    		d: noop
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if_block.d();
+    		}
     	};
 
     	dispatch_dev("SvelteRegisterBlock", {
@@ -892,8 +1155,13 @@ var app = (function () {
     	return block;
     }
 
-    function instance$4($$self, $$props) {
-    	const writable_props = [];
+    const noImg = "./image/no_image.jpg";
+
+    function instance$4($$self, $$props, $$invalidate) {
+    	let { image = "" } = $$props;
+    	let { movieId = "" } = $$props;
+    	let { clickable = false } = $$props;
+    	const writable_props = ["image", "movieId", "clickable"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Thumb> was created with unknown prop '${key}'`);
@@ -901,13 +1169,32 @@ var app = (function () {
 
     	let { $$slots = {}, $$scope } = $$props;
     	validate_slots("Thumb", $$slots, []);
-    	return [];
+
+    	$$self.$set = $$props => {
+    		if ("image" in $$props) $$invalidate(0, image = $$props.image);
+    		if ("movieId" in $$props) $$invalidate(2, movieId = $$props.movieId);
+    		if ("clickable" in $$props) $$invalidate(1, clickable = $$props.clickable);
+    	};
+
+    	$$self.$capture_state = () => ({ image, movieId, clickable, noImg });
+
+    	$$self.$inject_state = $$props => {
+    		if ("image" in $$props) $$invalidate(0, image = $$props.image);
+    		if ("movieId" in $$props) $$invalidate(2, movieId = $$props.movieId);
+    		if ("clickable" in $$props) $$invalidate(1, clickable = $$props.clickable);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [image, clickable, movieId];
     }
 
     class Thumb extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$4, create_fragment$4, safe_not_equal, {});
+    		init(this, options, instance$4, create_fragment$4, safe_not_equal, { image: 0, movieId: 2, clickable: 1 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -915,6 +1202,30 @@ var app = (function () {
     			options,
     			id: create_fragment$4.name
     		});
+    	}
+
+    	get image() {
+    		throw new Error("<Thumb>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set image(value) {
+    		throw new Error("<Thumb>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get movieId() {
+    		throw new Error("<Thumb>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set movieId(value) {
+    		throw new Error("<Thumb>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get clickable() {
+    		throw new Error("<Thumb>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set clickable(value) {
+    		throw new Error("<Thumb>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
@@ -1041,9 +1352,15 @@ var app = (function () {
     /* src/pages/Home.svelte generated by Svelte v3.24.0 */
 
     const { console: console_1$1 } = globals;
-    const file$3 = "src/pages/Home.svelte";
+    const file$5 = "src/pages/Home.svelte";
 
-    // (52:4) {#if movies.heroImage && !searchTerm}
+    function get_each_context(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[6] = list[i];
+    	return child_ctx;
+    }
+
+    // (53:4) {#if movies.heroImage && !searchTerm}
     function create_if_block_1(ctx) {
     	let hero;
     	let current;
@@ -1090,22 +1407,22 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(52:4) {#if movies.heroImage && !searchTerm}",
+    		source: "(53:4) {#if movies.heroImage && !searchTerm}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (49:0) {#if error}
-    function create_if_block(ctx) {
+    // (50:0) {#if error}
+    function create_if_block$1(ctx) {
     	let p;
 
     	const block = {
     		c: function create() {
     			p = element("p");
     			p.textContent = "Something went to wrong..";
-    			add_location(p, file$3, 49, 4, 1132);
+    			add_location(p, file$5, 50, 4, 1146);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -1120,9 +1437,158 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block.name,
+    		id: create_if_block$1.name,
     		type: "if",
-    		source: "(49:0) {#if error}",
+    		source: "(50:0) {#if error}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (65:4) {#each movies.movies as movie}
+    function create_each_block(ctx) {
+    	let thumb;
+    	let current;
+
+    	thumb = new Thumb({
+    			props: {
+    				clickable: true,
+    				image: /*movie*/ ctx[6].poster_path && IMAGE_BASE_URL + POSTER_SIZE + /*movie*/ ctx[6].poster_path,
+    				movieId: /*movie*/ ctx[6].id
+    			},
+    			$$inline: true
+    		});
+
+    	const block = {
+    		c: function create() {
+    			create_component(thumb.$$.fragment);
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(thumb, target, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			const thumb_changes = {};
+    			if (dirty & /*movies*/ 1) thumb_changes.image = /*movie*/ ctx[6].poster_path && IMAGE_BASE_URL + POSTER_SIZE + /*movie*/ ctx[6].poster_path;
+    			if (dirty & /*movies*/ 1) thumb_changes.movieId = /*movie*/ ctx[6].id;
+    			thumb.$set(thumb_changes);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(thumb.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(thumb.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(thumb, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block.name,
+    		type: "each",
+    		source: "(65:4) {#each movies.movies as movie}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (64:0) <Grid header={searchTerm ? 'Search Result' : 'Popular Movies'} >
+    function create_default_slot(ctx) {
+    	let each_1_anchor;
+    	let current;
+    	let each_value = /*movies*/ ctx[0].movies;
+    	validate_each_argument(each_value);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    	}
+
+    	const out = i => transition_out(each_blocks[i], 1, 1, () => {
+    		each_blocks[i] = null;
+    	});
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(target, anchor);
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*movies, IMAGE_BASE_URL, POSTER_SIZE*/ 1) {
+    				each_value = /*movies*/ ctx[0].movies;
+    				validate_each_argument(each_value);
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    						transition_in(each_blocks[i], 1);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						transition_in(each_blocks[i], 1);
+    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+    					}
+    				}
+
+    				group_outros();
+
+    				for (i = each_value.length; i < each_blocks.length; i += 1) {
+    					out(i);
+    				}
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+
+    			for (let i = 0; i < each_value.length; i += 1) {
+    				transition_in(each_blocks[i]);
+    			}
+
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			each_blocks = each_blocks.filter(Boolean);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				transition_out(each_blocks[i]);
+    			}
+
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each_1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot.name,
+    		type: "slot",
+    		source: "(64:0) <Grid header={searchTerm ? 'Search Result' : 'Popular Movies'} >",
     		ctx
     	});
 
@@ -1137,13 +1603,11 @@ var app = (function () {
     	let t1;
     	let grid;
     	let t2;
-    	let thumb;
-    	let t3;
     	let loadmorebuttun;
-    	let t4;
+    	let t3;
     	let spiner;
     	let current;
-    	const if_block_creators = [create_if_block, create_if_block_1];
+    	const if_block_creators = [create_if_block$1, create_if_block_1];
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
@@ -1158,8 +1622,18 @@ var app = (function () {
 
     	search = new Search({ $$inline: true });
     	search.$on("search", /*handleSearch*/ ctx[3]);
-    	grid = new Grid({ $$inline: true });
-    	thumb = new Thumb({ $$inline: true });
+
+    	grid = new Grid({
+    			props: {
+    				header: /*searchTerm*/ ctx[1]
+    				? "Search Result"
+    				: "Popular Movies",
+    				$$slots: { default: [create_default_slot] },
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
     	loadmorebuttun = new LoadMoreButton({ $$inline: true });
     	spiner = new Spinner({ $$inline: true });
 
@@ -1171,10 +1645,8 @@ var app = (function () {
     			t1 = space();
     			create_component(grid.$$.fragment);
     			t2 = space();
-    			create_component(thumb.$$.fragment);
-    			t3 = space();
     			create_component(loadmorebuttun.$$.fragment);
-    			t4 = space();
+    			t3 = space();
     			create_component(spiner.$$.fragment);
     		},
     		l: function claim(nodes) {
@@ -1190,10 +1662,8 @@ var app = (function () {
     			insert_dev(target, t1, anchor);
     			mount_component(grid, target, anchor);
     			insert_dev(target, t2, anchor);
-    			mount_component(thumb, target, anchor);
-    			insert_dev(target, t3, anchor);
     			mount_component(loadmorebuttun, target, anchor);
-    			insert_dev(target, t4, anchor);
+    			insert_dev(target, t3, anchor);
     			mount_component(spiner, target, anchor);
     			current = true;
     		},
@@ -1230,13 +1700,24 @@ var app = (function () {
     					if_block = null;
     				}
     			}
+
+    			const grid_changes = {};
+
+    			if (dirty & /*searchTerm*/ 2) grid_changes.header = /*searchTerm*/ ctx[1]
+    			? "Search Result"
+    			: "Popular Movies";
+
+    			if (dirty & /*$$scope, movies*/ 513) {
+    				grid_changes.$$scope = { dirty, ctx };
+    			}
+
+    			grid.$set(grid_changes);
     		},
     		i: function intro(local) {
     			if (current) return;
     			transition_in(if_block);
     			transition_in(search.$$.fragment, local);
     			transition_in(grid.$$.fragment, local);
-    			transition_in(thumb.$$.fragment, local);
     			transition_in(loadmorebuttun.$$.fragment, local);
     			transition_in(spiner.$$.fragment, local);
     			current = true;
@@ -1245,7 +1726,6 @@ var app = (function () {
     			transition_out(if_block);
     			transition_out(search.$$.fragment, local);
     			transition_out(grid.$$.fragment, local);
-    			transition_out(thumb.$$.fragment, local);
     			transition_out(loadmorebuttun.$$.fragment, local);
     			transition_out(spiner.$$.fragment, local);
     			current = false;
@@ -1260,10 +1740,8 @@ var app = (function () {
     			if (detaching) detach_dev(t1);
     			destroy_component(grid, detaching);
     			if (detaching) detach_dev(t2);
-    			destroy_component(thumb, detaching);
-    			if (detaching) detach_dev(t3);
     			destroy_component(loadmorebuttun, detaching);
-    			if (detaching) detach_dev(t4);
+    			if (detaching) detach_dev(t3);
     			destroy_component(spiner, detaching);
     		}
     	};
@@ -1324,6 +1802,7 @@ var app = (function () {
     		fetchMovies,
     		IMAGE_BASE_URL,
     		BACKDROP_SIZE,
+    		POSTER_SIZE,
     		Hero,
     		Search,
     		Grid,
