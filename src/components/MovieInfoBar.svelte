@@ -1,9 +1,8 @@
 <script>
-import { calcTime, convertMoney } from '../helpers'
+  import { calcTime, convertMoney } from '../helpers'
   export let time
   export let budget
   export let revenue
-
 
 </script>
 
@@ -16,7 +15,7 @@ import { calcTime, convertMoney } from '../helpers'
       <p>Budget: {convertMoney(budget)}</p>
     </div>
     <div class="content-col">
-      <p>Revenue: {convertMoney(time)}</p>
+      <p>Revenue: {convertMoney(revenue)}</p>
     </div>
   </div>
 </div>
