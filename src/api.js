@@ -1,3 +1,6 @@
+import Axios from 'axios';
+
+//import components
 import {
     POPULAR_BASE_URL,
     SEARCH_BASE_URL,
@@ -43,3 +46,20 @@ export const fetchMovie = async movieId => {
         directors
     }
 }
+
+const fetchMovieAxios = async movieId => {
+
+    const endpoint = MOVIE_ENDPOINT(movieId)
+    const creditsEndpoint = CREDITS_ENDPOINT(movieId)
+
+    const result = await (await Axios.get(endpoint))
+    const creditsResult = await (await Axios.get(creditsEndpoint))
+
+    return {
+        ...result,
+        actors: creditsResult.cast,
+        directors
+    }
+}
+
+export default fetchMovieAxios
